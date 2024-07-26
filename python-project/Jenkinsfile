@@ -1,0 +1,53 @@
+pipeline {
+    agent { label 'agent-node-1' }  // Specify the label of the agent you want to use
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Check out the source code from the repository
+                git 'https://github.com/Bansikah/jenkins-setup.git'
+            }
+        }
+
+        stage('Set up Python Environment') {
+            steps {
+                script {
+                    // Set up Python environment and install dependencies
+                    sh 'python3 -m venv venv'  // Create the virtual environment
+                    sh '. venv/bin/activate && pip install --upgrade pip'  // Upgrade pip
+                    sh '. venv/bin/activate && pip install -r requirements.txt'  // Install dependencies
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                script {
+                    // Run tests using pytest within the virtual environment
+                    sh '. venv/bin/activate && pytest tests/'
+                }
+            }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
+                // Archive test results and artifacts (optional)
+                archiveArtifacts artifacts: 'tests/*.xml', allowEmptyArchive: true
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                // Clean up (optional)
+                sh 'rm -rf *.pyc __pycache__'
+            }
+        }
+    }
+
+    post {
+        always {
+            // Actions that run after the pipeline completes
+            echo 'Pipeline completed.'
+        }
+    }
+}
